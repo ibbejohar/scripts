@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+dir=~/.config/bookmark/list
+
+prompt(){
+    rofi -i -dmenu $1
+}
+
+check_bookmark(){
+    check=$(ls $dir | grep bookmark)
+
+    if [[ -z $check ]]; then
+        mkdir -p ~/.config/bookmark
+        touch ~/.config/bookmark/list
+    fi
+}
+
+check_bookmark
+
+add_bookmark(){
+    url=$(prompt)
+    name_url=$(prompt)
+
+    if [[ -z "$url" || -z "$name_url" ]]; then
+        exit 
+    fi
+
+    echo "$url=$name_url" >> $dir
+}
+
+list(){
+    bookmark=$(cat $dir)
+    prettify(){
+        echo Add $bookmark | sed 's/ /\n/g' 
+    }
+    prettify | sed 's/^[^=]*=//'
+}
+
+begin=$(list | prompt -no-custom)
+
+if [[ -z $begin ]]; then
+    exit
+elif [ "$begin" = "Add" ]; then
+    add_bookmark
+else
+    open_url=$(cat $dir | grep $begin | sed 's/[=].*$//')
+    $BROWSER $open_url
+fi
+
