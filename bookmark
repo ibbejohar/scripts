@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
+BOOKMARK_VERSION="0.2.0"
+
 dir=~/.config/bookmark/list
+bookmark=$(cat $dir)
+button="Add\nDelete"
 
 prompt(){
     rofi -i -dmenu $1
@@ -25,15 +29,20 @@ add_bookmark(){
         exit 
     fi
 
-    echo "$url=$name_url" >> $dir
+    echo "$url = $name_url ;" >> $dir
+}
+
+newline(){
+    echo $bookmark | sed 's/ ;/\n/g' | awk -F ' = ' '{print $2}'
 }
 
 list(){
-    bookmark=$(cat $dir)
-    prettify(){
-        echo Add $bookmark | sed 's/ /\n/g' 
-    }
-    prettify | sed 's/^[^=]*=//'
+    echo  -e $button && newline
+}
+
+del_bookmark(){
+    del=$(newline | prompt)
+    cat $dir | sed -i "/$del/d" $dir
 }
 
 begin=$(list | prompt -no-custom)
@@ -42,8 +51,10 @@ if [[ -z $begin ]]; then
     exit
 elif [ "$begin" = "Add" ]; then
     add_bookmark
+elif [ "$begin" = "Delete" ]; then
+    del_bookmark
 else
-    open_url=$(cat $dir | grep $begin | sed 's/[=].*$//')
+    open_url=$(cat $dir | grep "$begin" | awk -F ' = ' '{print $1}')
     $BROWSER $open_url
 fi
 
