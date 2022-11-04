@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-BOOKMARK_VERSION="0.2.0"
+BOOKMARK_VERSION="0.2.1"
 
 dir=~/.config/bookmark/list
 bookmark=$(cat $dir)
@@ -37,11 +37,11 @@ newline(){
 }
 
 list(){
-    echo  -e $button && newline
+    echo -e $button && newline | sed '/^$/d'
 }
 
 del_bookmark(){
-    del=$(newline | prompt)
+    del=$(newline | sed '/^$/d' | prompt)
     cat $dir | sed -i "/$del/d" $dir
 }
 
