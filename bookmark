@@ -1,63 +1,99 @@
 #!/usr/bin/env bash
 
-# Author: Ibrahim Johar
-# Description: Bookmark
-# VERSION="0.2.1"
-
-dir=~/.config/bookmark/list
-bookmark=$(cat $dir)
-button="Add\nDelete"
+dir=~/.config/bookmark
+bookmark=$dir/list
+category=$dir/category
+option="Add\nDelete"
+option_bookmark="New Bookmark"
+option_category="New Category"
 
 prompt(){
-    rofi -i -dmenu $1
+    rofi -dmenu $1
 }
 
 check_bookmark(){
     check=$(ls $dir | grep bookmark)
-
+    
     if [[ -z $check ]]; then
-        mkdir -p ~/.config/bookmark
-        touch ~/.config/bookmark/list
+        mkdir -p $dir
+        touch $dir/list
+        touch $dir/category
     fi
 }
-
 check_bookmark
 
 add_bookmark(){
-    url=$(prompt)
+    add=$(echo -e "$option_bookmark\n$option_category" | prompt)
 
-    if [[ -z "$url" ]]; then
-        exit
-    else
-        name_url=$(prompt)
+    if [ "$add" = "$option_bookmark" ]; then
+        choose_cat=$(echo $(cat $category) | pretty | prompt)
+        if [[ -z $choose_cat ]]; then
+            exit
+        fi
+        url=$(prompt)
+        if [[ -z $url ]]; then
+            exit
+        else
+            name_url=$(prompt)
+            echo "$choose_cat = $url = $name_url ;" >> $bookmark
+        fi
+    elif [ "$add" = "$option_category" ]; then
+        new_category=$(prompt)
+        echo "$new_category ;" >> $category
     fi
-
-    echo "$url = $name_url ;" >> $dir
 }
 
-newline(){
-    echo $bookmark | sed 's/ ;/\n/g' | awk -F ' = ' '{print $2}'
+pretty(){
+    sed 's/ ;/\n/g' | sed '/^$/d'
+}
+
+list_cat(){
+    cat $category | pretty
+}
+
+list_book(){
+    cat $bookmark | pretty
 }
 
 list(){
-    echo -e $button && newline | sed '/^$/d'
+    list=$(echo -e "$option\n" $(cat $category) | pretty | prompt)  
+    cmp=$(list_cat | grep $list | sed 's/ ;//g' )
+
+    if [ $list = "$cmp" ]; then
+        list_book | grep $list | awk -F ' = ' '{print $3}' | prompt
+    else
+        echo $list
+    fi
 }
 
 del_bookmark(){
-    del=$(newline | sed '/^$/d' | prompt)
-    cat $dir | sed -i "/$del/d" $dir
+    del=$(echo -e "Delete Category\nDelete Bookmark" | prompt)
+
+    if [[ -z $del ]]; then
+        exit
+    elif [ "$del" = "Delete Category" ]; then
+        del_cat=$(list_cat | prompt)
+        cat $category | sed -i "/$del_cat/d" $category
+        cat $bookmark | sed -i "/$del_cat/d" $bookmark
+    elif [ "$del" = "Delete Bookmark" ]; then
+        cat=$(list_cat | prompt)
+        if [[ -z $cat ]]; then
+            exit
+        fi
+        del_book=$(list_book | grep $cat | awk -F ' = ' '{print $3}' | prompt)
+        cat $bookmark | grep "$del_book" | sed -i "/$del_book/d" $bookmark
+    fi
 }
 
-begin=$(list | prompt -no-custom)
+start=$(list)
 
-if [[ -z $begin ]]; then
+if [[ -z $start ]]; then
     exit
-elif [ "$begin" = "Add" ]; then
+elif [ "$start" = "Add" ]; then
     add_bookmark
-elif [ "$begin" = "Delete" ]; then
+elif [ "$start" = "Delete" ]; then
     del_bookmark
 else
-    open_url=$(cat $dir | grep "$begin" | awk -F ' = ' '{print $1}')
+    open_url=$(cat $bookmark | grep "$start ;" | awk -F ' = ' '{print $2}')
     $BROWSER $open_url
 fi
-
