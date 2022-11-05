@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-BOOKMARK_VERSION="0.2.1"
+# Author: Ibrahim Johar
+# Description: Bookmark
+# VERSION="0.2.1"
 
 dir=~/.config/bookmark/list
 bookmark=$(cat $dir)
@@ -23,10 +25,11 @@ check_bookmark
 
 add_bookmark(){
     url=$(prompt)
-    name_url=$(prompt)
 
-    if [[ -z "$url" || -z "$name_url" ]]; then
-        exit 
+    if [[ -z "$url" ]]; then
+        exit
+    else
+        name_url=$(prompt)
     fi
 
     echo "$url = $name_url ;" >> $dir
