@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+tid(){
+date | awk '{print $5}' | awk -F ":" '{print $2}'
+}
+
+while true; do
+    if [[ $(tid) = "00" ]]; then
+        $VIDEO ~/Music/dunst_plop.mp3
+        dunstify "An hour has gone by. What are you doing?" $(date | awk '{print $5}')
+        sleep 1h
+    fi
+    sleep 10s
+done

@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+
+# Author: Ibrahim Johar
+Version="0.1.0"
+# Description: Scrapting novelfull.com and downloading novels
+
+red='\033[0;31m'
+blue='\033[0;34m'
+purple='\033[0;35m'
+green='\033[0;32m'
+none='\033[0m'
+
+novdir=~/Documents/novels
+
+while getopts ":drhv" option; do
+    case $option in
+        d)
+            download=true
+            ;;
+        r)
+            range=true
+            echo -e "[-r] ${red}Feature is currently in development${none}"
+            exit
+            ;;
+        h)
+            echo "usage: $0 [options]
+            -d,     download
+            -h,     help"
+            exit
+            ;;
+        v)
+            echo "Version: $Version"
+            exit
+            ;;
+        *)
+            echo "usage: $0 [-h, help] [-d, download]"
+            exit 1
+            ;;
+    esac
+done
+
+search_proc(){
+    printf "${purple}Search\n${none}"
+    printf "${red}> ${none}"
+    read search_novel
+    found_novel
+}
+
+found_novel(){
+   while [ -z "$(list)" ]; do
+        printf "${red}Did not found result\n${none}"
+        search_proc
+    done
+}
+
+
+list(){
+query=$(echo $search_novel | sed 's/ /+/g')
+curl -s https://novelfull.com/search?keyword=$query | 
+    sed 's/></\n/g' | 
+    grep "alt" | 
+    awk -F "=" '{print $4}' | 
+    tr -d '"'
+}
+
+select_menu(){
+
+    novel=$(list | 
+        fzf --height=40% --reverse |
+        sed 's/ /\n/g' |
+        sed 's/[^A-Za-z0-9]//g; /^$/d' |
+        tr '\n' '-' |
+        sed 's/-$//g')
+    echo -e "\n${purple}$novel${none}" | sed 's/-/ /g'
+}
+
+
+novel_page(){
+    curl -s https://novelfull.com/$novel.html | 
+        sed 's/></\n/g' | 
+        grep "chapter-text" > /tmp/raw_chapters_page
+
+        cat /tmp/raw_chapters_page |
+        awk '{print $2}' |
+        sed 's/[^0-9]*//g' > /tmp/chapters-list
+    }
+
+novel_chapter_range(){
+    check_last_chapter=$(awk 'NR==1' /tmp/chapters-list)
+
+    if [ -z $check_last_chapter ]; then
+        last_chapter=$(awk 'NR==2' /tmp/chapters-list)
+    else
+        last_chapter=$(awk 'NR==1' /tmp/chapters-list)
+    fi
+
+    first_chapter=$(awk 'NR==6' /tmp/chapters-list)
+    printf "${purple}Select chapter ${red}[$first_chapter-$last_chapter]${none}\n"
+}
+
+# Novel picking process 
+search_proc
+select_menu
+novel_page
+novel_chapter_range
+
+select_chapter(){
+    printf "${red}> ${none}"
+    read select_chapter
+
+}
+
+
+# Each Novel page only have 50 chapters and rest are in sub pages which also have 50 chapters
+# Take Given Chapter and divide by 50 to get how many sub pages
+#
+#
+# if less than 50 don't do any calc
+# elif even number divide by 50
+# elif odd number divide by 50 and plus one, because doesn't round up
+
+sub_page_calc(){
+
+    reminder=$(expr $select_chapter % 50)
+
+    if [[ $select_chapter -le 50 ]]; then
+        true
+    else
+        if [[ $reminder -ne 0 ]]; then
+            sub_page_quantity=$(expr $select_chapter /  50)
+            novel_sub_page=$(expr $sub_page_quantity + 1)
+        else
+            novel_sub_page=$(expr $select_chapter /  50)
+        fi
+    fi
+}
+
+sub_page(){
+    # if selected chapter is lesser than 50, Don't Scrape Again
+    if [[ $select_chapter -gt 50 ]]; then
+        curl -s https://novelfull.com/$novel.html?page=$novel_sub_page | 
+            sed 's/></\n/g' | 
+            grep "chapter-text" > /tmp/raw_chapters_page
+    fi
+
+    chapter=$(cat /tmp/raw_chapters_page | 
+        grep -w "Chapter $select_chapter" | 
+        sed 's/>/\n/g; s/</\n/' | 
+        awk 'NR==2' |
+        sed 's/ /\n/g' |
+        sed 's/[^A-Za-z0-9]//g; /^$/d' |
+        tr '\n' '-' |
+        sed 's/-$//g')
+}
+
+# Chapter picking process
+select_chapter
+sub_page_calc
+sub_page
+
+
+curl -s https://novelfull.com/$novel/$chapter.html | readable -o /tmp/x.html 2> /dev/null
+
+director_checker(){
+   exist_novel=$(echo $novel | sed 's/-/_/g' | awk '{print tolower($0)}')
+   find_novel=$(ls -1 $novdir | grep "$exist_novel")
+
+   if [[ $find_novel != $exist_novel ]]; then
+       mkdir $novdir/$exist_novel
+   fi
+}
+
+
+if [[ $download = "true" ]]; then
+   echo -e "${green}Downloading...${none}"
+   director_checker
+   pandoc /tmp/x.html -o $novdir/$exist_novel/$chapter.pdf
+else
+   $BROWSER -P full /tmp/x.html
+fi
+
+
+

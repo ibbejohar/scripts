@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# Author: Ibrahim Johar
+# Created: 2023-04-15
+# Description: Poweroff selection menu
+
+prompt(){
+    $DMENU -i -p "Power" -theme-str '
+    window { 
+    width:150;
+    } 
+    mainbox { 
+    children: [listview]; 
+    }'
+}
+
+options(){
+printf "Shutdown
+Reboot
+Sleep
+Logout"
+}
+
+action=$(options | prompt)
+
+notify(){
+    $VIDEO ~/Music/dunst_plop.mp3
+    dunstify "$1"
+    if [[ $action = "Logout" ]]; then
+        sleep 2
+    fi
+}
+
+
+if [ "$action" = "Shutdown" ]; then
+    shutdown now
+elif [ "$action" = "Reboot" ]; then
+    reboot
+elif [ "$action" = "Sleep" ]; then
+    systemctl suspend
+elif [ "$action" = "Logout" ]; then
+    pkill dwm
+else
+    exit
+fi
+

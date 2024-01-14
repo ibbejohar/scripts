@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Author: Ibrahim Johar
+# Date: 2024-01-08
+# Desc: Lofi selector
+
+path=~/Musics/lofi/
+
+prettier() {
+	ls $path | sed 's/_/ /g' | sed 's/.mp3//'
+}
+
+choice=$(prettier | $DMENU -i -p "Lofi")
+
+reconv() {
+	echo $choice | sed 's/ /_/g' | sed -e 's/$/.mp3/'
+}
+
+pkill mpv
+mpv --loop $path/$(reconv)

@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+# Author: Ibrahim Johar
+# Version: Don't know, have to many times to keep track
+# Description: Print current mpd playing song in dwmblocks
+
+# Blue color for dwmblocks
+bg0=^b#314f57^
+
+off="volume: n/a   repeat: off   random: off   single: off   consume: off"
+duration=$(mpc | awk 'NR==2 {print $3}')
+
+song(){
+    mpc current
+}
+
+check_numline(){
+    song | 
+        # Remove everthing after "-"
+        sed 's/\-.*//g' | 
+        # Make every space a newline
+        sed 's/ /\n/g' | 
+        # Remove empty lines
+        sed '/^$/ d' | 
+        # Get line count
+        wc -l
+}
+
+num=$(expr $(check_numline) + 2)
+
+hipen(){
+    song | 
+        sed 's/ /\n/g' | 
+        grep "-"
+}
+
+check_state(){
+    mpc | awk 'NR==2 {print $1}'
+}
+
+trunckad(){
+    # -d delimiter; -f which field
+    song | cut -d " " -f $num-
+}
+
+state(){
+    if [ "$(check_state)" == "[paused]" ]; then
+        echo "${bg0}  $($1) "
+    elif [ "$(check_state)" == "[playing]" ]; then
+        echo "${bg0}  $($1) [$duration] "
+   fi
+}
+
+check_hipen(){
+    if [[ $(hipen) = "-" ]]; then
+        state trunckad
+    else
+        state song
+    fi
+}
+
+if [ "$song" == "$off" ] 
+then
+    echo "" 
+else
+    check_hipen 
+fi

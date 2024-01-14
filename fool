@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+main(){
+echo "Welcome Sir, what can I do you"
+
+printf "
+* zd --  open file that fzf has selected
+* novcli -- Scrap lightnovel site and download novel
+* mancli -- Scrap manga site and download manga
+* bookmark -- rofi launcher that launch saved bookmark in firefox
+* movie -- fzf list local movies
+* searen -- rofi launcher that have several search engines
+"
+}
+
+launch(){
+    $1
+}
+
+if [ -z $1 ]; then
+    main
+else
+    launch
+fi

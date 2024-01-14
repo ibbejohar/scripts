@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+bg0=^b#18272b^
+vol=$(pulsemixer --get-volume | awk '{print $1}')
+mute=$(pulsemixer --get-mute)
+
+if [ $mute = "1" ]; then
+    echo "${bg0} Mute ‎"
+elif [ $vol -eq 0 ]; then
+    printf "${bg0} :$vol%% ‎"
+elif [ $vol -gt 80 ]; then
+    printf "${bg0}  :$vol%% ‎" 
+elif [ $vol -gt 40 ]; then
+    printf "${bg0} 墳:$vol%% ‎"
+elif [ $vol -gt 10 ]||[ $vol -lt 10 ]||[ $vol -eq 10 ]; then
+    printf "${bg0} :$vol%% ‎"
+else
+    echo "${bg0} wait ‎"
+fi

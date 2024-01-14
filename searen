@@ -1,8 +1,56 @@
 #!/usr/bin/env bash
+# Author: Ibrahim Johar
+# Date: 2024-01-05
+# Description: Screenshot tool that use maim
+# Version: 0.0.1
 
-dir=~/.config/searen
+path=~/Pictures/screenshot
+todays_date=$(date +%Y-%m-%d)
 
-choose=$(ls $dir | rofi -dmenu -p "Search Engine:")
+dependencies_check() {
+	if [[ -z $(which maim) ]]; then
+		echo "maim is not installed"
+	fi
 
-$dir/$choose
+	if [[ -z $(echo $DMENU) ]]; then
+		if [[ -z $(which dmenu) ]]; then
+			echo "dmenu is not installed"
+			echo "if installed make sure dmenu variable is set in .bashrc or .profile"
+		elif [[ -z $(which rofi) ]]; then
+			echo "rofi is not installed"
+			echo "if installed make sure dmenu variable is set in .bashrc or .profile"
+		fi
+	fi
+}
 
+dependencies_check
+
+path_check() {
+	if [ -z $(ls ~/Pictures/ | grep screenshot) ]; then
+		mkdir -p $path
+	fi
+}
+
+path_check
+
+list="Screen\nSelect"
+
+# I know this supposed to work with dmenu but right now it only works with rofi
+# listview is removing the rofi entry prompt
+choice=$(printf $list | $DMENU -theme-str 'window { width: 150;} mainbox { children: [listview]; }')
+
+get_num() {
+	local get_num=$(ls $path | grep $todays_date | awk -F _ '{print $2}' | sed 's/.jpg//' | sort | tail -1)
+	num=$(expr $get_num + 1)
+}
+get_num
+
+if [[ $(echo $choice) = "Screen" ]]; then
+	maim -m 10 | tee $path/$todays_date\_$num.jpg | xclip -selection clipboard -t image/png
+	dunstify -r 01 -I $path/$todays_date\_$num.jpg "Screenshot has been taken"
+elif [[ $(echo $choice) = "Select" ]]; then
+	maim -s -m 10 | tee $path/$todays_date\_$num.jpg | xclip -selection clipboard -t image/png
+	dunstify -r 01 -I $path/$todays_date\_$num.jpg "Screenshot has been taken"
+else
+	exit
+fi

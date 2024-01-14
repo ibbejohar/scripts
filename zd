@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+# Author: Ibrahim Johar
+# Description: cd with fzf and open file
+# VERSION="3.0.1"
+# alias zd="source zd" in bashrc
+
+green="\e[0;1;38;5;37m"
+red="\e[0;31m"
+none="\e[0m"
+
+print_current_path(){
+    if [ /home/$(whoami) = $(pwd) ]; then
+        echo "~"
+    elif [ $(pwd | grep $(whoami)) ]; then
+        pwd | cut -d / -f4-
+    else
+        pwd
+    fi
+}
+
+user=$(whoami)
+prompt=$(echo -e "$red[$green$user$red] $green$(print_current_path)$none ♠ " )
+
+# If global var is no assign then assign them
+check_var(){
+    if [ -z $VIDEO ]; then
+        VIDEO=mpv
+    fi
+
+    if [ -z $PDF ]; then
+        PDF=zathura
+    fi
+
+    if [ -z $PICTURE ]; then
+        PICTURE=sxiv
+    fi
+}
+check_var
+
+# List current directorys and files
+list_file(){
+    echo "<<"
+    exa -al1 --color always
+}
+
+# Check what filetype it is
+check_filetype(){
+    file --mime-type $selected_file 2> /dev/null | sed 's/ /\n/g'
+}
+
+# Change directory if it's a directory or open the file in its repective program
+open_file(){
+    if [ "$selected_file" = "<<" ]; then
+        cd ..
+        zd
+    elif [ $(check_filetype | grep "directory") ]; then
+        cd $selected_file
+        zd
+    elif [ $(check_filetype | grep "image/") ]; then
+        $PICTURE $selected_file
+    elif [ $(check_filetype | grep "video/") ]; then
+        $VIDEO $selected_file
+    elif [ $(check_filetype | grep "text/") ]; then
+        $EDITOR $selected_file
+    elif [ $(check_filetype | grep "application/pdf") ]; then
+        $PDF $selected_file
+    fi
+}
+
+if [ -z $1 ]; then
+    # Store value that has been selected via fzf
+    selected_file=$(list_file | fzf --ansi --height 40% --reverse --cycle --prompt "$prompt")
+    open_file
+else
+    if [[ $1 = "-h" || $1 = "h" || $1 = "--home" ]]; then
+        cd ~
+    elif [[ $1 = "--help" ]]; then
+        echo "$0 [-h, h , --home] [--help].
+        Without argument fzf runs and will able to seletect file"
+    else
+        cd $1
+    fi
+fi

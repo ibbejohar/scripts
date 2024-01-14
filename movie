@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+# Author: Ibrahim Johar
+# Version: 0.1.0
+# Description: browse movie and tv-show with fzf
+
+dir=/media/sdc1/tv-show
+
+filetype(){
+    file --mime-type $show 2> /dev/null | sed 's/ /\n/g'
+}
+
+while true; do
+    show=$(ls -1 $dir | fzf)
+    dir=$dir/$show
+    if [ -z $show ]; then
+        exit
+    elif [ $(filetype | grep "video/") ]; then
+        $VIDEO $show
+        exit 0
+    fi
+done

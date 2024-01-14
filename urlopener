@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# Author: Ibrahim Johar
+# Version: 0.1.0
+# Description: open url 
+
+url=$($DMENU -i -p Url)
+
+if [ -z $url ]; then
+    exit
+else
+$BROWSER $url
+fi
+

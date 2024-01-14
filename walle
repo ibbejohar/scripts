@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+# Author: Ibrahim Johar
+# Date: 2023-08-16
+# Description: Select random wallpaper and change name to .background-image
+
+dir=~/Pictures/wallpapers
+
+random_wall(){
+    ls -1 $dir | shuf -n 1
+}
+
+change_wall(){
+    local wall=$(random_wall)
+    cp $dir/$wall ~/.background-image
+}
+
+change_wall

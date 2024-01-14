@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Author: Ibrahim Johar
+# Desc: Copy images from the terminal
+
+if [[ -z $1 ]]; then
+	echo "No args"
+else
+	cat $1 | xclip -selection clipboard -t image/png
+	dunstify -r 01 -I $1 "Copy"
+fi

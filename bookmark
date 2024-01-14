@@ -2,15 +2,27 @@
 
 # Author: Ibrahim Johar
 # Description: Bookmark
-# VERSION="0.2.1"
+# VERSION="0.3.0"
 
 dir=~/.config/bookmark/list
 bookmark=$(cat $dir)
 button="Add\nDelete"
 
+#prompt(){
+#    $DMENU -i -theme-str '
+#    entry {
+#        placeholder: "[$1]";
+#        placeholder-color: darkgrey;
+#    }
+#    prompt {
+#        enabled: false;
+#    }
+#    '
+#}
 prompt(){
-    rofi -i -dmenu $1
+    $DMENU -i -p $1
 }
+
 
 check_bookmark(){
     check=$(ls $dir | grep bookmark)
@@ -24,12 +36,12 @@ check_bookmark(){
 check_bookmark
 
 add_bookmark(){
-    url=$(prompt)
+    url=$(prompt "Url")
 
     if [[ -z "$url" ]]; then
         exit
     else
-        name_url=$(prompt)
+        name_url=$(prompt "Name")
     fi
 
     echo "$url = $name_url ;" >> $dir
@@ -44,11 +56,11 @@ list(){
 }
 
 del_bookmark(){
-    del=$(newline | sed '/^$/d' | prompt)
+    del=$(newline | sed '/^$/d' | prompt "Delete")
     cat $dir | sed -i "/$del/d" $dir
 }
 
-begin=$(list | prompt -no-custom)
+begin=$(list | prompt "Bookmark")
 
 if [[ -z $begin ]]; then
     exit

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+bg0=^b#22373c^
+
+mem=$(free -h | awk '/^Mem/ { print $3"/"$2 }')
+
+echo "${bg0} $mem"

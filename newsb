@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+# Author: Ibrahim Johar
+# Version: 1.0.0
+# Description: Taking url from newsboat and opening in browser or mpv
+
+path=~/.config/newsboat/link
+
+echo $@ > $path
+
+link=$(cat $path)
+
+compare(){
+    echo $link | grep youtube
+}
+
+if [ -z $(compare) ]; then
+    curl $link | readable -o /tmp/x.html
+    $BROWSER -P full /tmp/x.html
+else
+    $VIDEO $link
+fi
