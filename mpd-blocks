@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Author: Ibrahim Johar
-# Version: Don't know, have to many times to keep track
+# Version: 0.3.0
 # Description: Print current mpd playing song in dwmblocks
 
 # Blue color for dwmblocks
@@ -10,58 +10,61 @@ bg0=^b#314f57^
 off="volume: n/a   repeat: off   random: off   single: off   consume: off"
 duration=$(mpc | awk 'NR==2 {print $3}')
 
-song(){
-    mpc current
+song() {
+	mpc current
 }
 
-check_numline(){
-    song | 
-        # Remove everthing after "-"
-        sed 's/\-.*//g' | 
-        # Make every space a newline
-        sed 's/ /\n/g' | 
-        # Remove empty lines
-        sed '/^$/ d' | 
-        # Get line count
-        wc -l
+hipen() {
+	song |
+		sed 's/ /\n/g' |
+		grep "-"
 }
 
-num=$(expr $(check_numline) + 2)
-
-hipen(){
-    song | 
-        sed 's/ /\n/g' | 
-        grep "-"
+check_state() {
+	mpc | awk 'NR==2 {print $1}'
 }
 
-check_state(){
-    mpc | awk 'NR==2 {print $1}'
+song_name() {
+	song | awk -F ' - ' '{print $2}'
 }
 
-trunckad(){
-    # -d delimiter; -f which field
-    song | cut -d " " -f $num-
+trunckad() {
+	song_name |
+		sed 's/ /\n/g' |
+		sed -n '1, 4'p |
+		sed 's/$/ /' |
+		tr -d '\n' |
+		sed 's/ $//'
 }
 
-state(){
-    if [ "$(check_state)" == "[paused]" ]; then
-        echo "${bg0}  $($1) "
-    elif [ "$(check_state)" == "[playing]" ]; then
-        echo "${bg0}  $($1) [$duration] "
-   fi
+get_line_count() {
+	song_name |
+		sed 's/ /\n/g' |
+		wc -l
 }
 
-check_hipen(){
-    if [[ $(hipen) = "-" ]]; then
-        state trunckad
-    else
-        state song
-    fi
+state() {
+	if [ "$(check_state)" == "[paused]" ]; then
+		echo "${bg0}  $($1) "
+	elif [ "$(check_state)" == "[playing]" ]; then
+		if (($(get_line_count) > 4)); then
+			echo "${bg0}  $($1)... [$duration] "
+		else
+			echo "${bg0}  $($1) [$duration] "
+		fi
+	fi
 }
 
-if [ "$song" == "$off" ] 
-then
-    echo "" 
+check_hipen() {
+	if [[ $(hipen) = "-" ]]; then
+		state trunckad
+	else
+		state song
+	fi
+}
+
+if [ "$song" == "$off" ]; then
+	echo ""
 else
-    check_hipen 
+	check_hipen
 fi
