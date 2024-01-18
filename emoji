@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# Author: Ibrahim Johar
+# Date: 2024-01-18
+# Desc: list and copy emoji
+
+path=~/.local/share/emoji/emoji
+
+choice() {
+	cat $path | $DMENU -i -theme-str 'prompt { enabled: false; } entry { placeholder: "Emoji Selector"; placeholder-color: darkgrey; }'
+}
+
+copy() {
+	local choice=$(choice)
+
+	if [[ -z $choice ]]; then
+		exit
+	else
+		echo $choice | awk '{print $1}' | xclip -selection clipboard
+		dunstify -r 02 "Copy Emoji"
+	fi
+}
+
+copy
