@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Author: Ibrahim Johar
+# Date: 2024-01-28
+# Desc: Search kdrama site
+
+url=https://kissasian.lu/Search/Drama
+
+query(){
+    local query=$($DMENU -p Kdrama)
+    format=$(echo $query | sed 's/ /+/g')
+}
+query
+
+$BROWSER $url/$format
+
