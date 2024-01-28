@@ -6,7 +6,10 @@
 url=https://kissasian.lu/Search/Drama
 
 query(){
-    local query=$($DMENU -p Kdrama)
+    local query=$($DMENU -i -p Kdrama)
+    if [ -z $query ]; then
+        exit
+    fi
     format=$(echo $query | sed 's/ /+/g')
 }
 query
