@@ -2,74 +2,80 @@
 
 # Author: Ibrahim Johar
 # Description: Bookmark
-# VERSION="0.3.0"
 
-dir=~/.config/bookmark/list
-bookmark=$(cat $dir)
-button="Add\nDelete"
+readonly VERSION="0.4.0"
+readonly DIR=~/.local/share/bookmark
+readonly BOOKMARK=$DIR/bookmark
+# $DMENU - Defined in ~/.profile
+# $BROWSER - Defined in ~/.profile
 
-#prompt(){
-#    $DMENU -i -theme-str '
-#    entry {
-#        placeholder: "[$1]";
-#        placeholder-color: darkgrey;
-#    }
-#    prompt {
-#        enabled: false;
-#    }
-#    '
-#}
+main(){
+    check_dir
+    check_choice
+    open_bm
+}
+
+check_dir(){
+    if [[ ! -d $DIR ]]; then
+        mkdir -p $DIR
+    fi
+}
+
 prompt(){
     $DMENU -i -p $1
 }
 
-
-check_bookmark(){
-    check=$(ls $dir | grep bookmark)
-
-    if [[ -z $check ]]; then
-        mkdir -p ~/.config/bookmark
-        touch ~/.config/bookmark/list
-    fi
+options(){
+printf "Add\nDelete\n"
+bm
 }
 
-check_bookmark
-
-add_bookmark(){
-    url=$(prompt "Url")
-
-    if [[ -z "$url" ]]; then
-        exit
-    else
-        name_url=$(prompt "Name")
-    fi
-
-    echo "$url = $name_url ;" >> $dir
+bm(){
+   cat $BOOKMARK | awk -F  " = "  '{print $1}'
 }
 
-newline(){
-    echo $bookmark | sed 's/ ;/\n/g' | awk -F ' = ' '{print $2}'
+choice(){
+options | prompt "Bookmark"
 }
 
-list(){
-    echo -e $button && newline | sed '/^$/d'
+add(){
+    local url=$(prompt "Url")
+    [[ -z $url ]] && exit
+    local name=$(prompt "Name")
+
+    echo "$name = $url" >> $BOOKMARK
 }
 
-del_bookmark(){
-    del=$(newline | sed '/^$/d' | prompt "Delete")
-    cat $dir | sed -i "/$del/d" $dir
+delete(){
+    local delete=$(bm | prompt "Delete")
+    [[ -z $delete ]] && exit
+    sed -i "/${delete} = /d" $BOOKMARK
 }
 
-begin=$(list | prompt "Bookmark")
+selected_bm(){
+    url=$(grep -w "$1 " $BOOKMARK | awk -F " = " '{print $2}')
+}
 
-if [[ -z $begin ]]; then
-    exit
-elif [ "$begin" = "Add" ]; then
-    add_bookmark
-elif [ "$begin" = "Delete" ]; then
-    del_bookmark
-else
-    open_url=$(cat $dir | grep "$begin" | awk -F ' = ' '{print $1}')
-    $BROWSER $open_url
-fi
+check_choice(){
+    local choice=$(choice)
 
+    case $choice in
+        Add)
+            add
+            ;;
+        Delete)
+            delete
+            ;;
+        *)
+            [[ -z $choice ]] && exit
+            selected_bm "$choice"
+            ;;
+    esac
+}
+
+open_bm(){
+    [[ -z $url ]] && exit
+    $BROWSER $url
+}
+
+main
