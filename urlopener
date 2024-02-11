@@ -1,14 +1,32 @@
 #!/usr/bin/env bash
 
 # Author: Ibrahim Johar
-# Version: 0.1.0
+# Version: 0.2.0
 # Description: open url 
 
 url=$($DMENU -i -p Url)
+search_engine="https://www.google.com/search?q="
+
+check_url(){
+    https=$(echo $url | grep -o "https://")
+    com=$(echo $url | grep -o ".com")
+    se=$(echo $url | grep -o ".se")
+    net=$(echo $url | grep -o ".net")
+    org=$(echo $url | grep -o ".org")
+
+    if [ $https = "https://" ]; then
+        echo "true"
+    elif [[ $com = ".com" || $se = ".se" || $net = ".net" || $org = ".org" ]]; then
+        echo "true"
+    fi
+}
+
 
 if [ -z $url ]; then
     exit
+elif [ $(check_url) = "true" ]; then
+    $BROWSER $url
 else
-$BROWSER $url
+    query=$(echo $url | sed 's/ /+/g')
+    $BROWSER $search_engine$query
 fi
-
