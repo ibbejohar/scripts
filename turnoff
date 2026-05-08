@@ -5,7 +5,8 @@
 # Description: Poweroff selection menu
 
 prompt(){
-    $DMENU -i -p "Power" -theme-str '
+    # $DMENU -i -p "Power" -theme-str '
+    rofi -dmenu -i -p "Power" -theme-str '
     window { 
     width:150;
     } 
