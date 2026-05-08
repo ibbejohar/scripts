@@ -4,10 +4,10 @@
 # Description: Screenshot tool that use maim
 # Version: 0.0.2
 
-
-DMENU="rofi -dmenu"
 readonly DIR="$HOME/Pictures/screenshot"
 readonly TODAY=$(date +%Y-%m-%d)
+
+[[ -z $DMENU ]] && DMENU="rofi -dmenu"
 
 check_dep(){
     local dep=1
@@ -16,6 +16,7 @@ check_dep(){
         [[ -z $(command -v grim) ]] && echo "grim is not installed" && dep=0
     elif [[ $XDG_SESSION_TYPE == "x11" ]]; then
         [[ -z $(command -v maim) ]] && echo "maim is not installed" && dep=0
+        [[ -z $(command -v xclip) ]] && echo "xclip is not installed" && dep=0
     fi
 
     [[ $dep == 0 ]] && exit
@@ -37,17 +38,19 @@ screenshot(){
     if [[ $XDG_SESSION_TYPE == "wayland" ]]; then
         if [[ $selected = "Select" ]]; then
             local dim=$(slurp)
-            grim -g "$dim" "$DIR"/"$TODAY"_"$num".png
+            grim -g "$dim" - | tee "$DIR"/"$TODAY"_"$num".png | wl-copy
             notify-send "${TODAY}_${num}.png" -i "$DIR"/"$TODAY"_"$num".png
         elif [[ $selected = "Screen" ]]; then
-            grim "$DIR"/"$TODAY"_"$num".png
+            grim - | tee "$DIR"/"$TODAY"_"$num".png | wl-copy
             notify-send "${TODAY}_${num}.png" -i "$DIR"/"$TODAY"_"$num".png
         fi
     elif [[ $XDG_SESSION_TYPE == "x11" ]]; then
         if [[ $selected = "Select" ]]; then
-            echo "Work in progress"
+            maim -s -m 10 | tee "$DIR"/"$TODAY"_"$num".jpg | xclip -selection clipboard -t image/png
+            notify-send "${TODAY}_${num}.png" -i "$DIR"/"$TODAY"_"$num".png
         elif [[ $selected = "Screen" ]]; then
-            echo "Work in progress"
+            maim -m 10 | tee "$DIR"/"$TODAY"_"$num".jpg | xclip -selection clipboard -t image/png
+            notify-send "${TODAY}_${num}.png" -i "$DIR"/"$TODAY"_"$num".png
         fi
     fi
 }
